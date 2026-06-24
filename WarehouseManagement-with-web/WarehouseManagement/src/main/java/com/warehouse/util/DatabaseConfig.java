@@ -34,9 +34,14 @@ public class DatabaseConfig {
     }
 
     private static final String DRIVER = getProperty("db.driver", "com.mysql.cj.jdbc.Driver");
-    private static final String URL = getProperty("db.url", "jdbc:mysql://localhost:3306/warehouse_db");
-    private static final String USERNAME = getProperty("db.username", "root");
-    private static final String PASSWORD = getProperty("db.password", "Tarun@2525");
+     private static final String URL =
+     System.getenv("DB_URL");
+
+     private static final String USERNAME =
+      System.getenv("DB_USER");
+
+     private static final String PASSWORD =
+     System.getenv("DB_PASSWORD");
 
     /**
      * Get property value from configuration
