@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alerts – Warehouse Management System</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { background: #f4f6f9; }
+    .navbar-brand i { margin-right: 8px; }
+    .main-content { min-height: calc(100vh - 130px); }
+    .alert-card { border-left: 4px solid; border-radius: 8px; margin-bottom: 12px; transition: box-shadow .2s; }
+    .alert-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+    .alert-card.critical { border-left-color: #dc3545; }
+    .alert-card.warning  { border-left-color: #ffc107; }
+    .alert-card.info     { border-left-color: #0dcaf0; }
+    .badge-critical { background:#dc3545; }
+    .badge-warning  { background:#ffc107; color:#000; }
+    .badge-info     { background:#0dcaf0; color:#000; }
+    .filter-btn.active { box-shadow: 0 0 0 3px rgba(13,110,253,.35); }
+    .empty-state { text-align:center; padding:60px 20px; color:#888; }
+    .metric-icon { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:1.2rem; }
+    .metric-card { border-radius:12px; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark navbar-expand-lg sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html"><i class="fas fa-warehouse"></i> Warehouse Management System</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Products</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="products.html">All Products</a></li>
+            <li><a class="dropdown-item" href="products.html?action=add">Add Product</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Inventory</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="inventory.html">Stock Levels</a></li>
+            <li><a class="dropdown-item" href="inventory.html?view=low-stock">Low Stock</a></li>
+            <li><a class="dropdown-item" href="inventory.html?view=overstock">Overstock</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="suppliers.html">Suppliers</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Orders</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="purchase-orders.html">Purchase Orders</a></li>
+            <li><a class="dropdown-item" href="sales-orders.html">Sales Orders</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link active" href="alerts.html"><i class="fas fa-bell"></i> Alerts <span class="badge bg-danger" id="alertBadge">0</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="reports.html">Reports</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="container-fluid py-4">
+    <div class="row mb-4">
+      <div class="col-md-8">
+        <h1 class="display-5"><i class="fas fa-bell"></i> Alerts</h1>
+        <p class="text-muted">System notifications and inventory warnings</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <button class="btn btn-outline-danger me-2" onclick="clearAllAlerts()"><i class="fas fa-trash"></i> Clear All</button>
+        <button class="btn btn-primary" onclick="refreshAlerts()"><i class="fas fa-sync"></i> Refresh</button>
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+      <div class="col-md-4 mb-3">
+        <div class="card metric-card border-0 shadow-sm">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div><h6 class="text-muted mb-1">Critical Alerts</h6><h2 class="mb-0 text-danger" id="criticalCount">0</h2></div>
+            <div class="metric-icon bg-danger"><i class="fas fa-exclamation-circle"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="card metric-card border-0 shadow-sm">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div><h6 class="text-muted mb-1">Warnings</h6><h2 class="mb-0 text-warning" id="warningCount">0</h2></div>
+            <div class="metric-icon bg-warning"><i class="fas fa-exclamation-triangle"></i></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="card metric-card border-0 shadow-sm">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div><h6 class="text-muted mb-1">Info</h6><h2 class="mb-0 text-info" id="infoCount">0</h2></div>
+            <div class="metric-icon bg-info"><i class="fas fa-info-circle"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body d-flex gap-2 flex-wrap align-items-center">
+        <span class="fw-semibold me-2">Filter:</span>
+        <button class="btn btn-sm btn-outline-secondary filter-btn active" onclick="filterAlerts('all', this)">All</button>
+        <button class="btn btn-sm btn-outline-danger filter-btn" onclick="filterAlerts('critical', this)">Critical</button>
+        <button class="btn btn-sm btn-outline-warning filter-btn" onclick="filterAlerts('warning', this)">Warning</button>
+        <button class="btn btn-sm btn-outline-info filter-btn" onclick="filterAlerts('info', this)">Info</button>
+        <div class="ms-auto">
+          <input type="text" class="form-control form-control-sm" id="alertSearch" placeholder="Search alerts..." oninput="searchAlerts(this.value)" style="width:220px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Alerts List -->
+    <div id="alertsContainer"></div>
+  </div>
+</main>
+
+<footer class="bg-dark text-light py-4 mt-5">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-6"><p class="mb-0">&copy; 2024 Warehouse Management System. All rights reserved.</p></div>
+      <div class="col-md-6 text-end"><p class="mb-0">Version 1.0.0</p></div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+  const ALERTS_KEY = 'wms_alerts';
+  let allAlerts = [];
+  let currentFilter = 'all';
+
+  const defaultAlerts = [
+    { id:1, type:'critical', title:'Out of Stock: Laptop Stand Pro', message:'Product SKU-1023 has reached 0 units. Reorder immediately.', time:'2 mins ago', icon:'fas fa-box-open', dismissed:false },
+    { id:2, type:'critical', title:'Low Stock: USB-C Hub 7-in-1', message:'Only 3 units remaining (min threshold: 10). Place purchase order.', time:'15 mins ago', icon:'fas fa-exclamation-circle', dismissed:false },
+    { id:3, type:'warning', title:'Overstock: Wireless Mouse X200', message:'250 units in stock — 3× above maximum threshold. Consider promotions.', time:'1 hour ago', icon:'fas fa-warehouse', dismissed:false },
+    { id:4, type:'warning', title:'Purchase Order #PO-2041 Delayed', message:'Supplier TechParts India has flagged shipment delay of 5 days.', time:'2 hours ago', icon:'fas fa-truck', dismissed:false },
+    { id:5, type:'info', title:'Inventory Audit Scheduled', message:'Monthly inventory count set for 30 Jun 2024 at 09:00 AM.', time:'3 hours ago', icon:'fas fa-calendar-check', dismissed:false },
+    { id:6, type:'info', title:'New Supplier Onboarded', message:'GlobalTech Supplies has been added and is ready for orders.', time:'1 day ago', icon:'fas fa-handshake', dismissed:false },
+    { id:7, type:'critical', title:'Expiry Alert: Thermal Paste Batch #T-099', message:'12 units expire within 30 days. Review and action required.', time:'1 day ago', icon:'fas fa-clock', dismissed:false },
+    { id:8, type:'warning', title:'Sales Order #SO-5512 On Hold', message:'Payment pending for order worth ₹84,500. Follow up with customer.', time:'2 days ago', icon:'fas fa-file-invoice', dismissed:false },
+  ];
+
+  function loadAlerts() {
+    const saved = localStorage.getItem(ALERTS_KEY);
+    allAlerts = saved ? JSON.parse(saved) : JSON.parse(JSON.stringify(defaultAlerts));
+    renderAlerts();
+    updateCounts();
+    updateBadge();
+  }
+
+  function saveAlerts() { localStorage.setItem(ALERTS_KEY, JSON.stringify(allAlerts)); }
+
+  function updateCounts() {
+    const active = allAlerts.filter(a => !a.dismissed);
+    document.getElementById('criticalCount').textContent = active.filter(a=>a.type==='critical').length;
+    document.getElementById('warningCount').textContent  = active.filter(a=>a.type==='warning').length;
+    document.getElementById('infoCount').textContent     = active.filter(a=>a.type==='info').length;
+    document.getElementById('alertBadge').textContent    = active.length;
+  }
+
+  function updateBadge() {
+    document.getElementById('alertBadge').textContent = allAlerts.filter(a=>!a.dismissed).length;
+  }
+
+  function renderAlerts(filter, search) {
+    filter = filter || currentFilter;
+    search = (search || '').toLowerCase();
+    const container = document.getElementById('alertsContainer');
+    let list = allAlerts.filter(a => !a.dismissed);
+    if (filter !== 'all') list = list.filter(a => a.type === filter);
+    if (search) list = list.filter(a => a.title.toLowerCase().includes(search) || a.message.toLowerCase().includes(search));
+
+    if (!list.length) {
+      container.innerHTML = `<div class="empty-state"><i class="fas fa-check-circle fa-3x text-success mb-3"></i><h5>No alerts here</h5><p>All clear! No active alerts match your filter.</p></div>`;
+      return;
+    }
+    container.innerHTML = list.map(a => `
+      <div class="card alert-card ${a.type} border-0 shadow-sm" id="alert-${a.id}">
+        <div class="card-body d-flex align-items-start gap-3">
+          <div class="mt-1" style="font-size:1.4rem;color:${a.type==='critical'?'#dc3545':a.type==='warning'?'#ffc107':'#0dcaf0'}">
+            <i class="${a.icon}"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <strong>${a.title}</strong>
+              <span class="badge badge-${a.type}">${a.type.toUpperCase()}</span>
+            </div>
+            <p class="mb-1 text-muted">${a.message}</p>
+            <small class="text-muted"><i class="fas fa-clock me-1"></i>${a.time}</small>
+          </div>
+          <button class="btn btn-sm btn-outline-secondary" onclick="dismissAlert(${a.id})" title="Dismiss"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function dismissAlert(id) {
+    allAlerts = allAlerts.map(a => a.id===id ? {...a, dismissed:true} : a);
+    saveAlerts(); renderAlerts(); updateCounts(); updateBadge();
+  }
+
+  function clearAllAlerts() {
+    if (!confirm('Clear all active alerts?')) return;
+    allAlerts = allAlerts.map(a => ({...a, dismissed:true}));
+    saveAlerts(); renderAlerts(); updateCounts(); updateBadge();
+  }
+
+  function filterAlerts(type, btn) {
+    currentFilter = type;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderAlerts(type);
+  }
+
+  function searchAlerts(val) { renderAlerts(currentFilter, val); }
+  function refreshAlerts() { loadAlerts(); }
+
+  loadAlerts();
+</script>
+</body>
+</html>

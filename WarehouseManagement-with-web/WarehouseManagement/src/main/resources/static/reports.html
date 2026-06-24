@@ -1,0 +1,361 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports – Warehouse Management System</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { background:#f4f6f9; }
+    .main-content { min-height:calc(100vh - 130px); }
+    .metric-card { border-radius:12px; }
+    .metric-icon { width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem; }
+    .report-card { border-radius:12px; transition:.2s; cursor:pointer; }
+    .report-card:hover { box-shadow:0 6px 20px rgba(0,0,0,.12); transform:translateY(-2px); }
+    .chart-bar-wrap { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .chart-bar { height:24px; border-radius:4px; min-width:4px; transition:width .6s; display:flex; align-items:center; padding:0 8px; color:#fff; font-size:.75rem; font-weight:600; }
+    .chart-label { width:160px; font-size:.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .chart-val { font-size:.82rem; color:#555; min-width:70px; text-align:right; }
+    .progress-thin { height:6px; border-radius:3px; }
+    .modal-header { background:#343a40;color:#fff; }
+    .modal-header .btn-close { filter:invert(1); }
+    .tab-content { padding-top:20px; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark navbar-expand-lg sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html"><i class="fas fa-warehouse"></i> Warehouse Management System</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Products</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="products.html">All Products</a></li>
+            <li><a class="dropdown-item" href="products.html?action=add">Add Product</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Inventory</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="inventory.html">Stock Levels</a></li>
+            <li><a class="dropdown-item" href="inventory.html?view=low-stock">Low Stock</a></li>
+            <li><a class="dropdown-item" href="inventory.html?view=overstock">Overstock</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="suppliers.html">Suppliers</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Orders</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="purchase-orders.html">Purchase Orders</a></li>
+            <li><a class="dropdown-item" href="sales-orders.html">Sales Orders</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="alerts.html"><i class="fas fa-bell"></i> Alerts <span class="badge bg-danger">3</span></a></li>
+        <li class="nav-item"><a class="nav-link active" href="reports.html">Reports</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="container-fluid py-4">
+    <div class="row mb-4">
+      <div class="col-md-8">
+        <h1 class="display-5"><i class="fas fa-chart-bar"></i> Reports &amp; Analytics</h1>
+        <p class="text-muted">Business insights from your warehouse data</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <button class="btn btn-outline-secondary" onclick="exportAllCSV()"><i class="fas fa-download"></i> Export Report</button>
+      </div>
+    </div>
+
+    <!-- KPI Cards -->
+    <div class="row mb-4" id="kpiRow"></div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs mb-0" id="reportTabs">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#inventoryTab">Inventory</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#salesTab">Sales</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#purchaseTab">Purchasing</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#supplierTab">Suppliers</button></li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- Inventory Tab -->
+      <div class="tab-pane fade show active" id="inventoryTab">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0"><i class="fas fa-boxes text-primary"></i> Stock by Category</h6></div>
+              <div class="card-body" id="stockByCat"></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0"><i class="fas fa-rupee-sign text-success"></i> Value by Product (Top 8)</h6></div>
+              <div class="card-body" id="valueByProduct"></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0"><i class="fas fa-table text-info"></i> Full Inventory Summary</h6></div>
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead class="table-dark"><tr><th>SKU</th><th>Product</th><th>Category</th><th>Stock</th><th>Value (₹)</th><th>Status</th><th>Fill %</th></tr></thead>
+                  <tbody id="invSummaryTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sales Tab -->
+      <div class="tab-pane fade" id="salesTab">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0"><i class="fas fa-chart-pie text-info"></i> Orders by Status</h6></div>
+              <div class="card-body" id="soByStatus"></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0"><i class="fas fa-users text-primary"></i> Top Customers by Revenue</h6></div>
+              <div class="card-body" id="topCustomers"></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0"><i class="fas fa-list text-warning"></i> Recent Sales Orders</h6></div>
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead class="table-dark"><tr><th>SO#</th><th>Customer</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+                  <tbody id="soTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Purchase Tab -->
+      <div class="tab-pane fade" id="purchaseTab">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0"><i class="fas fa-chart-bar text-success"></i> POs by Status</h6></div>
+              <div class="card-body" id="poByStatus"></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0"><i class="fas fa-truck text-warning"></i> Spend by Supplier</h6></div>
+              <div class="card-body" id="spendBySupplier"></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0">Recent Purchase Orders</h6></div>
+              <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                  <thead class="table-dark"><tr><th>PO#</th><th>Supplier</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+                  <tbody id="poTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Supplier Tab -->
+      <div class="tab-pane fade" id="supplierTab">
+        <div class="row g-3">
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0"><i class="fas fa-star text-warning"></i> Supplier Ratings</h6></div>
+              <div class="card-body" id="supRatings"></div>
+            </div>
+          </div>
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm">
+              <div class="card-header bg-light"><h6 class="mb-0"><i class="fas fa-shipping-fast text-info"></i> Lead Times</h6></div>
+              <div class="card-body" id="supLeadTimes"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="bg-dark text-light py-4 mt-5">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-6"><p class="mb-0">&copy; 2024 Warehouse Management System. All rights reserved.</p></div>
+      <div class="col-md-6 text-end"><p class="mb-0">Version 1.0.0</p></div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+// Load data from localStorage (falls back to defaults)
+const inventory = JSON.parse(localStorage.getItem('wms_inventory')) || [
+  {sku:'SKU-1001',name:'Laptop Stand Pro',category:'Accessories',stock:0,min:5,max:50,price:1299},
+  {sku:'SKU-1002',name:'USB-C Hub 7-in-1',category:'Accessories',stock:3,min:10,max:80,price:2499},
+  {sku:'SKU-1003',name:'Wireless Mouse X200',category:'Peripherals',stock:250,min:20,max:100,price:849},
+  {sku:'SKU-1004',name:'Mechanical Keyboard K80',category:'Peripherals',stock:42,min:10,max:60,price:3999},
+  {sku:'SKU-1005',name:'4K Monitor 27"',category:'Electronics',stock:18,min:5,max:30,price:24999},
+  {sku:'SKU-1006',name:'SSD 1TB NVMe',category:'Storage',stock:7,min:15,max:70,price:5499},
+  {sku:'SKU-1007',name:'Webcam HD 1080p',category:'Electronics',stock:35,min:10,max:50,price:2999},
+  {sku:'SKU-1008',name:'HDMI Cable 2m',category:'Accessories',stock:120,min:20,max:80,price:399},
+];
+const salesOrders = JSON.parse(localStorage.getItem('wms_sales_orders')) || [
+  {id:'SO-5508',customer:'Aditya Technolab',date:'2024-06-05',status:'delivered',items:[{qty:5,price:4499},{qty:5,price:999}]},
+  {id:'SO-5509',customer:'PixelCraft Studios',date:'2024-06-08',status:'shipped',items:[{qty:3,price:26999}]},
+  {id:'SO-5510',customer:'DigiNest Solutions',date:'2024-06-10',status:'processing',items:[{qty:20,price:2699},{qty:20,price:449}]},
+  {id:'SO-5511',customer:'FutureTech Corp',date:'2024-06-12',status:'new',items:[{qty:10,price:3199}]},
+  {id:'SO-5512',customer:'Bright Innovations',date:'2024-06-14',status:'on-hold',items:[{qty:15,price:5999}]},
+  {id:'SO-5513',customer:'Synapse Networks',date:'2024-06-16',status:'cancelled',items:[{qty:10,price:1399}]},
+];
+const purchaseOrders = JSON.parse(localStorage.getItem('wms_purchase_orders')) || [
+  {id:'PO-2038',supplier:'TechParts India',date:'2024-06-01',status:'received',items:[{qty:50,price:900},{qty:80,price:1800}]},
+  {id:'PO-2039',supplier:'GlobalTech Supplies',date:'2024-06-08',status:'approved',items:[{qty:30,price:2200}]},
+  {id:'PO-2040',supplier:'DataStore Solutions',date:'2024-06-12',status:'pending',items:[{qty:40,price:4200}]},
+  {id:'PO-2041',supplier:'TechParts India',date:'2024-06-15',status:'pending',items:[{qty:10,price:20000}]},
+  {id:'PO-2042',supplier:'CableMart',date:'2024-06-18',status:'cancelled',items:[{qty:100,price:300}]},
+];
+const suppliers = JSON.parse(localStorage.getItem('wms_suppliers')) || [
+  {name:'TechParts India',rating:4,lead:5,status:'active'},
+  {name:'GlobalTech Supplies',rating:5,lead:3,status:'active'},
+  {name:'DataStore Solutions',rating:3,lead:10,status:'active'},
+  {name:'PeripheralHub',rating:2,lead:14,status:'inactive'},
+  {name:'CableMart',rating:4,lead:7,status:'active'},
+];
+
+const totalOf = items => items.reduce((s,i)=>s+i.qty*i.price,0);
+const fmt = n => '₹'+n.toLocaleString('en-IN');
+const COLORS = ['#0d6efd','#198754','#ffc107','#dc3545','#0dcaf0','#6f42c1','#fd7e14','#20c997'];
+
+function bar(label, val, max, color, valStr) {
+  const pct = max ? Math.round(val/max*100) : 0;
+  return `<div class="chart-bar-wrap">
+    <div class="chart-label" title="${label}">${label}</div>
+    <div style="flex:1"><div class="chart-bar" style="width:${Math.max(pct,3)}%;background:${color}">${pct>15?valStr:''}</div></div>
+    <div class="chart-val">${valStr}</div>
+  </div>`;
+}
+
+function statusBadge(s) {
+  const map={pending:'bg-warning text-dark',approved:'bg-primary',received:'bg-success',cancelled:'bg-secondary',new:'bg-primary',processing:'bg-warning text-dark',shipped:'bg-info text-dark',delivered:'bg-success','on-hold':'bg-danger'};
+  return `<span class="badge ${map[s]||'bg-secondary'}">${s}</span>`;
+}
+
+function renderKPI() {
+  const invVal = inventory.reduce((s,i)=>s+i.stock*i.price,0);
+  const revenue = salesOrders.reduce((s,o)=>s+totalOf(o.items),0);
+  const lowStock = inventory.filter(i=>i.stock<i.min).length;
+  const kpis=[
+    {label:'Inventory Value',val:fmt(invVal),icon:'fa-rupee-sign',bg:'bg-primary'},
+    {label:'Total Revenue',val:fmt(revenue),icon:'fa-chart-line',bg:'bg-success'},
+    {label:'Low Stock Items',val:lowStock,icon:'fa-exclamation-triangle',bg:'bg-danger'},
+    {label:'Active Suppliers',val:suppliers.filter(s=>s.status==='active').length,icon:'fa-handshake',bg:'bg-info'},
+  ];
+  document.getElementById('kpiRow').innerHTML = kpis.map(k=>`
+    <div class="col-md-3 mb-3">
+      <div class="card metric-card border-0 shadow-sm">
+        <div class="card-body d-flex justify-content-between align-items-center">
+          <div><h6 class="text-muted mb-1">${k.label}</h6><h2>${k.val}</h2></div>
+          <div class="metric-icon ${k.bg}"><i class="fas ${k.icon}"></i></div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderInventoryTab() {
+  // By category
+  const cats = {};
+  inventory.forEach(i=>{ cats[i.category]=(cats[i.category]||0)+i.stock; });
+  const maxCat = Math.max(...Object.values(cats));
+  document.getElementById('stockByCat').innerHTML = Object.entries(cats).map(([c,v],i)=>bar(c,v,maxCat,COLORS[i],`${v} units`)).join('');
+
+  // By value
+  const sorted = [...inventory].sort((a,b)=>b.stock*b.price-a.stock*a.price).slice(0,8);
+  const maxVal = sorted[0]?sorted[0].stock*sorted[0].price:1;
+  document.getElementById('valueByProduct').innerHTML = sorted.map((i,idx)=>bar(i.name,i.stock*i.price,maxVal,COLORS[idx],fmt(i.stock*i.price))).join('');
+
+  // Table
+  document.getElementById('invSummaryTable').innerHTML = inventory.map(i=>{
+    const s=i.stock<i.min?'<span class="badge bg-danger">Low</span>':i.stock>i.max?'<span class="badge bg-warning text-dark">Over</span>':'<span class="badge bg-success">OK</span>';
+    const pct=i.max?Math.min(100,Math.round(i.stock/i.max*100)):0;
+    return `<tr><td><code>${i.sku}</code></td><td>${i.name}</td><td>${i.category}</td><td>${i.stock}</td><td>${fmt(i.stock*i.price)}</td><td>${s}</td>
+      <td style="min-width:100px"><div class="progress progress-thin"><div class="progress-bar" style="width:${pct}%"></div></div><small>${pct}%</small></td></tr>`;
+  }).join('');
+}
+
+function renderSalesTab() {
+  const statuses=['new','processing','shipped','delivered','on-hold','cancelled'];
+  const counts={}; statuses.forEach(s=>counts[s]=0);
+  salesOrders.forEach(o=>counts[o.status]=(counts[o.status]||0)+1);
+  const maxSO=Math.max(...Object.values(counts));
+  document.getElementById('soByStatus').innerHTML=statuses.map((s,i)=>bar(s,counts[s],maxSO,COLORS[i],`${counts[s]} orders`)).join('');
+
+  // Top customers
+  const custRev={};
+  salesOrders.forEach(o=>custRev[o.customer]=(custRev[o.customer]||0)+totalOf(o.items));
+  const top=Object.entries(custRev).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const maxRev=top[0]?top[0][1]:1;
+  document.getElementById('topCustomers').innerHTML=top.map(([c,v],i)=>bar(c,v,maxRev,COLORS[i],fmt(v))).join('');
+
+  // Table
+  document.getElementById('soTable').innerHTML=salesOrders.slice(0,8).map(o=>`
+    <tr><td>${o.id}</td><td>${o.customer}</td><td>${o.date}</td><td>${o.items.length}</td><td>${fmt(totalOf(o.items))}</td><td>${statusBadge(o.status)}</td></tr>`).join('');
+}
+
+function renderPurchaseTab() {
+  const statuses=['pending','approved','received','cancelled'];
+  const counts={}; statuses.forEach(s=>counts[s]=0);
+  purchaseOrders.forEach(o=>counts[o.status]=(counts[o.status]||0)+1);
+  const maxPO=Math.max(...Object.values(counts));
+  document.getElementById('poByStatus').innerHTML=statuses.map((s,i)=>bar(s,counts[s],maxPO,COLORS[i],`${counts[s]} orders`)).join('');
+
+  // Spend by supplier
+  const spend={}; purchaseOrders.forEach(o=>spend[o.supplier]=(spend[o.supplier]||0)+totalOf(o.items));
+  const tops=Object.entries(spend).sort((a,b)=>b[1]-a[1]);
+  const maxSpend=tops[0]?tops[0][1]:1;
+  document.getElementById('spendBySupplier').innerHTML=tops.map(([s,v],i)=>bar(s,v,maxSpend,COLORS[i],fmt(v))).join('');
+
+  document.getElementById('poTable').innerHTML=purchaseOrders.slice(0,8).map(o=>`
+    <tr><td>${o.id}</td><td>${o.supplier}</td><td>${o.date}</td><td>${o.items.length}</td><td>${fmt(totalOf(o.items))}</td><td>${statusBadge(o.status)}</td></tr>`).join('');
+}
+
+function renderSupplierTab() {
+  const maxRating=5;
+  document.getElementById('supRatings').innerHTML=suppliers.map((s,i)=>bar(s.name,s.rating,maxRating,COLORS[i],`${s.rating}/5 ⭐`)).join('');
+  const maxLead=Math.max(...suppliers.map(s=>s.lead));
+  document.getElementById('supLeadTimes').innerHTML=suppliers.map((s,i)=>bar(s.name,s.lead,maxLead,COLORS[i],`${s.lead} days`)).join('');
+}
+
+function exportAllCSV() {
+  const rows=[['Report Type','Key','Value'],
+    ...inventory.map(i=>['Inventory',i.name,i.stock*i.price]),
+    ...salesOrders.map(o=>['Sales Order',o.id,totalOf(o.items)]),
+    ...purchaseOrders.map(o=>['Purchase Order',o.id,totalOf(o.items)]),
+  ];
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv,'+encodeURIComponent(csv);a.download='wms-report.csv';a.click();
+}
+
+renderKPI();
+renderInventoryTab();
+renderSalesTab();
+renderPurchaseTab();
+renderSupplierTab();
+</script>
+</body>
+</html>

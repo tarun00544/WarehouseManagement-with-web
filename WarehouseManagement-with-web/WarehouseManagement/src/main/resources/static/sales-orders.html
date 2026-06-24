@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales Orders – Warehouse Management System</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <style>
+    body { background:#f4f6f9; }
+    .main-content { min-height:calc(100vh - 130px); }
+    .metric-card { border-radius:12px; }
+    .metric-icon { width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem; }
+    .badge-new       { background:#0d6efd; }
+    .badge-processing{ background:#ffc107;color:#000; }
+    .badge-shipped   { background:#0dcaf0;color:#000; }
+    .badge-delivered { background:#198754; }
+    .badge-cancelled { background:#6c757d; }
+    .badge-on-hold   { background:#dc3545; }
+    .modal-header { background:#343a40;color:#fff; }
+    .modal-header .btn-close { filter:invert(1); }
+    .order-row { cursor:pointer; }
+    .order-row:hover { background:#f0f4ff; }
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark navbar-expand-lg sticky-top">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="index.html"><i class="fas fa-warehouse"></i> Warehouse Management System</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"><span class="navbar-toggler-icon"></span></button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Products</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="products.html">All Products</a></li>
+            <li><a class="dropdown-item" href="products.html?action=add">Add Product</a></li>
+          </ul>
+        </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Inventory</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="inventory.html">Stock Levels</a></li>
+            <li><a class="dropdown-item" href="inventory.html?view=low-stock">Low Stock</a></li>
+            <li><a class="dropdown-item" href="inventory.html?view=overstock">Overstock</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="suppliers.html">Suppliers</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle active" href="#" data-bs-toggle="dropdown">Orders</a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="purchase-orders.html">Purchase Orders</a></li>
+            <li><a class="dropdown-item" href="sales-orders.html">Sales Orders</a></li>
+          </ul>
+        </li>
+        <li class="nav-item"><a class="nav-link" href="alerts.html"><i class="fas fa-bell"></i> Alerts <span class="badge bg-danger">3</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="reports.html">Reports</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<main class="main-content">
+  <div class="container-fluid py-4">
+    <div class="row mb-4">
+      <div class="col-md-8">
+        <h1 class="display-5"><i class="fas fa-store"></i> Sales Orders</h1>
+        <p class="text-muted">Track outgoing orders and customer fulfilment</p>
+      </div>
+      <div class="col-md-4 text-end">
+        <button class="btn btn-primary" onclick="openSOModal()"><i class="fas fa-plus"></i> New Sales Order</button>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="row mb-4">
+      <div class="col-md-2 mb-3">
+        <div class="card metric-card border-0 shadow-sm">
+          <div class="card-body text-center"><h6 class="text-muted mb-1">Total</h6><h2 id="totalSO">0</h2></div>
+        </div>
+      </div>
+      <div class="col-md-2 mb-3">
+        <div class="card metric-card border-0 shadow-sm">
+          <div class="card-body text-center"><h6 class="text-muted mb-1">New</h6><h2 class="text-primary" id="newSO">0</h2></div>
+        </div>
+      </div>
+      <div class="col-md-2 mb-3">
+        <div class="card metric-card border-0 shadow-sm">
+          <div class="card-body text-center"><h6 class="text-muted mb-1">Processing</h6><h2 class="text-warning" id="processingSO">0</h2></div>
+        </div>
+      </div>
+      <div class="col-md-2 mb-3">
+        <div class="card metric-card border-0 shadow-sm">
+          <div class="card-body text-center"><h6 class="text-muted mb-1">Delivered</h6><h2 class="text-success" id="deliveredSO">0</h2></div>
+        </div>
+      </div>
+      <div class="col-md-4 mb-3">
+        <div class="card metric-card border-0 shadow-sm">
+          <div class="card-body d-flex justify-content-between align-items-center">
+            <div><h6 class="text-muted mb-1">Total Revenue</h6><h2 id="totalRevenue">₹0</h2></div>
+            <div class="metric-icon bg-success"><i class="fas fa-rupee-sign"></i></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body d-flex gap-2 flex-wrap">
+        <input type="text" class="form-control form-control-sm" id="soSearch" placeholder="Search order / customer…" oninput="renderSOs()" style="max-width:280px;">
+        <select class="form-select form-select-sm" id="soStatusFilter" onchange="renderSOs()" style="max-width:180px;">
+          <option value="all">All Status</option>
+          <option value="new">New</option>
+          <option value="processing">Processing</option>
+          <option value="shipped">Shipped</option>
+          <option value="delivered">Delivered</option>
+          <option value="on-hold">On Hold</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card border-0 shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-dark">
+            <tr><th>SO Number</th><th>Customer</th><th>Order Date</th><th>Delivery Date</th><th>Items</th><th>Total</th><th>Status</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="soTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- SO Modal -->
+<div class="modal fade" id="soModal" tabindex="-1">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title" id="soModalTitle">New Sales Order</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <input type="hidden" id="soEditId">
+        <div class="row g-3 mb-3">
+          <div class="col-md-4"><label class="form-label">Customer Name *</label><input type="text" class="form-control" id="soCustomer"></div>
+          <div class="col-md-4"><label class="form-label">Customer Email</label><input type="email" class="form-control" id="soEmail"></div>
+          <div class="col-md-4"><label class="form-label">Phone</label><input type="text" class="form-control" id="soPhone"></div>
+          <div class="col-md-4"><label class="form-label">Order Date</label><input type="date" class="form-control" id="soDate"></div>
+          <div class="col-md-4"><label class="form-label">Delivery Date</label><input type="date" class="form-control" id="soDelivery"></div>
+          <div class="col-md-4"><label class="form-label">Status</label>
+            <select class="form-select" id="soStatus">
+              <option value="new">New</option><option value="processing">Processing</option>
+              <option value="shipped">Shipped</option><option value="delivered">Delivered</option>
+              <option value="on-hold">On Hold</option><option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="col-12"><label class="form-label">Delivery Address</label><input type="text" class="form-control" id="soAddress"></div>
+          <div class="col-12"><label class="form-label">Notes</label><input type="text" class="form-control" id="soNotes"></div>
+        </div>
+        <h6 class="fw-bold">Order Items</h6>
+        <div class="table-responsive">
+          <table class="table table-bordered">
+            <thead class="table-light"><tr><th>Product</th><th>SKU</th><th>Qty</th><th>Selling Price (₹)</th><th>Total</th><th></th></tr></thead>
+            <tbody id="soItems"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-sm btn-outline-primary" onclick="addSOItem()"><i class="fas fa-plus"></i> Add Item</button>
+        <div class="text-end mt-2"><strong>Grand Total: ₹<span id="soGrandTotal">0</span></strong></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" onclick="saveSO()">Save Order</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer class="bg-dark text-light py-4 mt-5">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-6"><p class="mb-0">&copy; 2024 Warehouse Management System. All rights reserved.</p></div>
+      <div class="col-md-6 text-end"><p class="mb-0">Version 1.0.0</p></div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+const SO_KEY = 'wms_sales_orders';
+let orders = JSON.parse(localStorage.getItem(SO_KEY)) || [
+  {id:'SO-5508',customer:'Aditya Technolab',email:'aditya@techlab.in',phone:'9812300001',date:'2024-06-05',delivery:'2024-06-12',status:'delivered',address:'Connaught Place, New Delhi',notes:'',items:[{name:'Mechanical Keyboard',sku:'SKU-1004',qty:5,price:4499},{name:'Wireless Mouse',sku:'SKU-1003',qty:5,price:999}]},
+  {id:'SO-5509',customer:'PixelCraft Studios',email:'buy@pixelcraft.io',phone:'9876500002',date:'2024-06-08',delivery:'2024-06-15',status:'shipped',address:'Koramangala, Bengaluru',notes:'',items:[{name:'4K Monitor 27"',sku:'SKU-1005',qty:3,price:26999}]},
+  {id:'SO-5510',customer:'DigiNest Solutions',email:'orders@diginest.co',phone:'9001200003',date:'2024-06-10',delivery:'2024-06-18',status:'processing',address:'Bandra, Mumbai',notes:'',items:[{name:'USB-C Hub',sku:'SKU-1002',qty:20,price:2699},{name:'HDMI Cable',sku:'SKU-1008',qty:20,price:449}]},
+  {id:'SO-5511',customer:'FutureTech Corp',email:'procurement@ft.com',phone:'9765400004',date:'2024-06-12',delivery:'2024-06-20',status:'new',address:'Salt Lake, Kolkata',notes:'Rush order',items:[{name:'Webcam HD 1080p',sku:'SKU-1007',qty:10,price:3199}]},
+  {id:'SO-5512',customer:'Bright Innovations',email:'buy@bright.in',phone:'9123400005',date:'2024-06-14',delivery:'2024-06-21',status:'on-hold',address:'Whitefield, Bengaluru',notes:'Payment pending',items:[{name:'SSD 1TB NVMe',sku:'SKU-1006',qty:15,price:5999}]},
+  {id:'SO-5513',customer:'Synapse Networks',email:'admin@synapse.net',phone:'9990000006',date:'2024-06-16',delivery:'2024-06-22',status:'cancelled',address:'Sector 62, Noida',notes:'Customer cancelled',items:[{name:'Laptop Stand Pro',sku:'SKU-1001',qty:10,price:1399}]},
+];
+let nextNum = 5514;
+function save() { localStorage.setItem(SO_KEY, JSON.stringify(orders)); }
+function totalOf(items) { return items.reduce((s,i)=>s+i.qty*i.price,0); }
+
+function statusBadge(s) {
+  const map={new:'badge-new',processing:'badge-processing',shipped:'badge-shipped',delivered:'badge-delivered','on-hold':'badge-on-hold',cancelled:'badge-cancelled'};
+  return `<span class="badge ${map[s]||'bg-secondary'}">${s.charAt(0).toUpperCase()+s.slice(1)}</span>`;
+}
+
+function updateSummary() {
+  document.getElementById('totalSO').textContent = orders.length;
+  document.getElementById('newSO').textContent = orders.filter(o=>o.status==='new').length;
+  document.getElementById('processingSO').textContent = orders.filter(o=>o.status==='processing').length;
+  document.getElementById('deliveredSO').textContent = orders.filter(o=>o.status==='delivered').length;
+  document.getElementById('totalRevenue').textContent = '₹'+orders.reduce((s,o)=>s+totalOf(o.items),0).toLocaleString('en-IN');
+}
+
+function renderSOs() {
+  const q = document.getElementById('soSearch').value.toLowerCase();
+  const sf = document.getElementById('soStatusFilter').value;
+  const list = orders.filter(o=>(sf==='all'||o.status===sf)&&(!q||o.id.toLowerCase().includes(q)||o.customer.toLowerCase().includes(q)));
+  updateSummary();
+  document.getElementById('soTableBody').innerHTML = list.length ? list.map(o=>`
+    <tr class="order-row">
+      <td><strong>${o.id}</strong></td>
+      <td>${o.customer}</td>
+      <td>${o.date}</td>
+      <td>${o.delivery||'-'}</td>
+      <td>${o.items.length} item(s)</td>
+      <td>₹${totalOf(o.items).toLocaleString('en-IN')}</td>
+      <td>${statusBadge(o.status)}</td>
+      <td>
+        <button class="btn btn-sm btn-outline-primary me-1" onclick="editSO('${o.id}')"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-sm btn-outline-danger" onclick="deleteSO('${o.id}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`).join('') : '<tr><td colspan="8" class="text-center text-muted py-4">No sales orders found.</td></tr>';
+}
+
+function openSOModal(order) {
+  document.getElementById('soEditId').value = order ? order.id : '';
+  document.getElementById('soModalTitle').textContent = order ? `Edit ${order.id}` : 'New Sales Order';
+  ['customer','email','phone','date','delivery','status','address','notes'].forEach(f=>{
+    const el = document.getElementById('so'+f.charAt(0).toUpperCase()+f.slice(1));
+    if(el) el.value = order ? (order[f]||'') : (f==='date'?new Date().toISOString().split('T')[0]:f==='status'?'new':'');
+  });
+  document.getElementById('soItems').innerHTML='';
+  (order?order.items:[{name:'',sku:'',qty:1,price:0}]).forEach(item=>addSOItem(item));
+  calcSOTotal();
+  new bootstrap.Modal(document.getElementById('soModal')).show();
+}
+function editSO(id) { openSOModal(orders.find(o=>o.id===id)); }
+
+function addSOItem(item) {
+  item = item||{name:'',sku:'',qty:1,price:0};
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="form-control form-control-sm" value="${item.name}" placeholder="Product" oninput="calcSOTotal()"></td>
+    <td><input type="text" class="form-control form-control-sm" value="${item.sku}" style="width:90px" oninput="calcSOTotal()"></td>
+    <td><input type="number" class="form-control form-control-sm" value="${item.qty}" min="1" style="width:70px" oninput="calcSOTotal()"></td>
+    <td><input type="number" class="form-control form-control-sm" value="${item.price}" min="0" style="width:110px" oninput="calcSOTotal()"></td>
+    <td class="row-total">₹0</td>
+    <td><button class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove();calcSOTotal()"><i class="fas fa-times"></i></button></td>`;
+  document.getElementById('soItems').appendChild(tr);
+  calcSOTotal();
+}
+
+function calcSOTotal() {
+  let grand=0;
+  document.querySelectorAll('#soItems tr').forEach(tr=>{
+    const inputs=tr.querySelectorAll('input');
+    const t=(parseFloat(inputs[2]?.value)||0)*(parseFloat(inputs[3]?.value)||0);
+    grand+=t;
+    const td=tr.querySelector('.row-total');
+    if(td) td.textContent='₹'+t.toLocaleString('en-IN');
+  });
+  document.getElementById('soGrandTotal').textContent=grand.toLocaleString('en-IN');
+}
+
+function saveSO() {
+  const id=document.getElementById('soEditId').value||`SO-${nextNum++}`;
+  const customer=document.getElementById('soCustomer').value.trim();
+  if(!customer){alert('Customer name is required.');return;}
+  const items=[];
+  document.querySelectorAll('#soItems tr').forEach(tr=>{
+    const inputs=tr.querySelectorAll('input');
+    if(inputs[0]?.value.trim()) items.push({name:inputs[0].value.trim(),sku:inputs[1]?.value.trim(),qty:parseInt(inputs[2]?.value)||1,price:parseFloat(inputs[3]?.value)||0});
+  });
+  if(!items.length){alert('Add at least one item.');return;}
+  const order={id,customer,email:document.getElementById('soEmail').value,phone:document.getElementById('soPhone').value,date:document.getElementById('soDate').value,delivery:document.getElementById('soDelivery').value,status:document.getElementById('soStatus').value,address:document.getElementById('soAddress').value,notes:document.getElementById('soNotes').value,items};
+  const idx=orders.findIndex(o=>o.id===id);
+  if(idx>=0) orders[idx]=order; else orders.unshift(order);
+  save();renderSOs();
+  bootstrap.Modal.getInstance(document.getElementById('soModal')).hide();
+}
+
+function deleteSO(id){
+  if(!confirm(`Delete ${id}?`))return;
+  orders=orders.filter(o=>o.id!==id);
+  save();renderSOs();
+}
+
+if(new URLSearchParams(location.search).get('action')==='new') setTimeout(()=>openSOModal(),300);
+renderSOs();
+</script>
+</body>
+</html>

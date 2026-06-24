@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Management System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-dark bg-dark navbar-expand-lg sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-warehouse"></i> Warehouse Management System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="index.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="productsDropdown" role="button" data-bs-toggle="dropdown">
+                            Products
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="productsDropdown">
+                            <li><a class="dropdown-item" href="products.html">All Products</a></li>
+                            <li><a class="dropdown-item" href="products.html?action=add">Add Product</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="inventoryDropdown" role="button" data-bs-toggle="dropdown">
+                            Inventory
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="inventoryDropdown">
+                            <li><a class="dropdown-item" href="inventory.html">Stock Levels</a></li>
+                            <li><a class="dropdown-item" href="inventory.html?view=low-stock">Low Stock</a></li>
+                            <li><a class="dropdown-item" href="inventory.html?view=overstock">Overstock</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="suppliers.html">Suppliers</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="ordersDropdown" role="button" data-bs-toggle="dropdown">
+                            Orders
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="ordersDropdown">
+                            <li><a class="dropdown-item" href="purchase-orders.html">Purchase Orders</a></li>
+                            <li><a class="dropdown-item" href="sales-orders.html">Sales Orders</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="alerts.html">
+                            <i class="fas fa-bell"></i> Alerts
+                            <span class="badge bg-danger" id="alertBadge">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="reports.html">Reports</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container-fluid py-4">
+            <!-- Header -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <h1 class="display-5">
+                        <i class="fas fa-chart-line"></i> Warehouse Dashboard
+                    </h1>
+                    <p class="text-muted">Real-time inventory and operations overview</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div id="currentDateTime" class="text-muted"></div>
+                </div>
+            </div>
+
+            <!-- Key Metrics Cards -->
+            <div class="row mb-4">
+                <!-- Total Products -->
+                <div class="col-md-3 mb-3">
+                    <div class="card metric-card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title text-muted">Total Products</h6>
+                                    <h2 class="card-text" id="totalProducts">0</h2>
+                                </div>
+                                <div class="metric-icon bg-primary">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Inventory Value -->
+                <div class="col-md-3 mb-3">
+                    <div class="card metric-card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title text-muted">Inventory Value</h6>
+                                    <h2 class="card-text" id="totalValue">₹0</h2>
+                                </div>
+                                <div class="metric-icon bg-success">
+                                    <i class="fas fa-rupee-sign"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total Suppliers -->
+                <div class="col-md-3 mb-3">
+                    <div class="card metric-card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title text-muted">Active Suppliers</h6>
+                                    <h2 class="card-text" id="totalSuppliers">0</h2>
+                                </div>
+                                <div class="metric-icon bg-info">
+                                    <i class="fas fa-handshake"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Alerts -->
+                <div class="col-md-3 mb-3">
+                    <div class="card metric-card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="card-title text-muted">Active Alerts</h6>
+                                    <h2 class="card-text text-danger" id="activeAlerts">0</h2>
+                                </div>
+                                <div class="metric-icon bg-danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row mb-4">
+                <!-- Low Stock Items -->
+                <div class="col-lg-6 mb-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-exclamation-circle text-warning"></i> Low Stock Items
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="lowStockList">
+                                <p class="text-muted">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Alerts -->
+                <div class="col-lg-6 mb-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-bell text-danger"></i> Recent Alerts
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="alertsList">
+                                <p class="text-muted">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">
+                                <i class="fas fa-lightning-bolt"></i> Quick Actions
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                <div class="col-md-3">
+                                    <a href="products.html?action=add" class="btn btn-primary w-100">
+                                        <i class="fas fa-plus"></i> Add Product
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="purchase-orders.html?action=new" class="btn btn-success w-100">
+                                        <i class="fas fa-shopping-cart"></i> New Purchase Order
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="sales-orders.html?action=new" class="btn btn-info w-100">
+                                        <i class="fas fa-store"></i> New Sales Order
+                                    </a>
+                                </div>
+                                <div class="col-md-3">
+                                    <a href="reports.html" class="btn btn-warning w-100">
+                                        <i class="fas fa-chart-bar"></i> View Reports
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-light py-4 mt-5">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-6">
+                    <p>&copy; 2024 Warehouse Management System. All rights reserved.</p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <p>Version 1.0.0</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
